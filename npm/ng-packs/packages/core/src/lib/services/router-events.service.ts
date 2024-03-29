@@ -1,4 +1,5 @@
-import { Injectable, Type } from '@angular/core';
+import { effect, inject, Injectable, signal, Type } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -6,8 +7,9 @@ import {
   NavigationStart,
   Router,
   RouterEvent,
-  Event
+  Event,
 } from '@angular/router';
+import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 export const NavigationEvent = {
@@ -19,12 +21,29 @@ export const NavigationEvent = {
 
 @Injectable({ providedIn: 'root' })
 export class RouterEvents {
-  constructor(private router: Router) {}
+  private readonly router = inject(Router);
+
+  private readonly navigation$ = toSignal(
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd)) as Observable<NavigationEnd>,
+  );
+
+  readonly #navigations = signal<NavigationEnd[]>([]);
+  readonly navigations = this.#navigations.asReadonly();
+
+  constructor() {
+    effect(
+      () => {
+        const navigation = this.navigation$();
+        if (navigation) {
+          this.#navigations.update(navigations => [...navigations.slice(-1), navigation]);
+        }
+      },
+      { allowSignalWrites: true },
+    );
+  }
 
   getEvents<T extends RouterEventConstructors>(...eventTypes: T) {
-
-    const filterRouterEvents = (event: Event) =>
-      eventTypes.some(type => event instanceof type);
+    const filterRouterEvents = (event: Event) => eventTypes.some(type => event instanceof type);
 
     return this.router.events.pipe(filter(filterRouterEvents));
   }
