@@ -28,4 +28,4 @@ Additionally, the [account](../../modules/account-pro.md) module provides the [s
 
 ## Authentication Flow
 
-TODO:
+The applications use several flows to authenticate users based on the application type. The MVC UI web application uses the [hybrid flow](https://openid.net/specs/openid-connect-core-1_0.html#HybridFlowAuth) (OpenID Connect Authentication) to authenticate users, while the SPA and Swagger applications use the [authorization code flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth) to authenticate users. After the user logs into the system and receives the token from the authentication server, the applications (microservices) use [JWT Bearer Authentication](https://jwt.io/introduction/) to authorize users.
